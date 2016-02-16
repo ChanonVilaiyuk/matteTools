@@ -23,7 +23,7 @@ charPresets = {
 
 presetKey = '$replace'
 
-etcPresets = {	
+propPresets = {	
 				1: {'tag': 'Etc1', 'mm': 'mm_$replace_etc1', 'presetName': ''}, 
 				2: {'tag': 'Etc2', 'mm': 'mm_$replace_etc1', 'presetName': ''}, 
 				3: {'tag': 'Etc3', 'mm': 'mm_$replace_etc1', 'presetName': ''}, 
@@ -36,7 +36,7 @@ etcPresets = {
 				}
 
 
-propPresets = {
+extraPreset = {
 				100: {'tag': 'Chrome1', 'mm': 'mm_chrome', 'presetName': ''}, 
 				101: {'tag': 'Chrome2', 'mm': 'mm_chrome', 'presetName': ''}, 
 				102: {'tag': 'Chrome3', 'mm': 'mm_chrome', 'presetName': ''}, 

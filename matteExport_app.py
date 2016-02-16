@@ -84,18 +84,19 @@ class MyForm(QtGui.QMainWindow):
 
         # icons 
         self.logo = '%s/%s' % (moduleDir, 'icons/logo.png')
-        self.logo2 = '%s/%s' % (moduleDir, 'icons/shotgun_logo.png')
+        self.logo2 = '%s/%s' % (moduleDir, 'icons/logo2.png')
         self.okIcon = '%s/%s' % (moduleDir, 'icons/ok_icon.png')
         self.xIcon = '%s/%s' % (moduleDir, 'icons/x_icon.png')
         self.rdyIcon = '%s/%s' % (moduleDir, 'icons/rdy_icon.png')
         self.redIcon = '%s/%s' % (moduleDir, 'icons/red2_icon.png')
 
-        self.openStatus = 'Open       '
-        self.assignStatus = 'Assigned  '
+        self.openStatus = 'Open           '
+        self.assignStatus = 'Assigned      '
         self.duplicatedStatus = 'Duplicated ID'
         self.readyStatus = 'Ready'
         self.inDb = 'In DataBase'
         self.wrongIDStatus = 'Wrong ID Setting'
+        self.extraPresetStatus = 'Extra Preset'
 
         # target rigGrp
         self.rigGrp = ['Rig_Grp', 'Rig:Rig_Grp']
@@ -119,6 +120,7 @@ class MyForm(QtGui.QMainWindow):
         self.red = [60, 0, 0]
         self.green = [0, 60, 0]
         self.blue = [20, 40, 100]
+        self.lightGreen = [40, 100, 0]
 
         self.initFunctions()
         self.initSignals()
@@ -140,6 +142,8 @@ class MyForm(QtGui.QMainWindow):
         # radioButton 
         self.ui.char_radioButton.clicked.connect(self.refreshUI)
         self.ui.prop_radioButton.clicked.connect(self.refreshUI)
+        self.ui.normal_checkBox.stateChanged.connect(self.refreshUI)
+        self.ui.extra_checkBox.stateChanged.connect(self.refreshUI)
 
 
     def readDb(self) : 
@@ -168,11 +172,14 @@ class MyForm(QtGui.QMainWindow):
 
     def setLogo(self) : 
         self.ui.logo_label.setPixmap(QtGui.QPixmap(self.logo).scaled(200, 60, QtCore.Qt.KeepAspectRatio))
+        self.ui.logo2_label.setPixmap(QtGui.QPixmap(self.logo2).scaled(126, 60, QtCore.Qt.KeepAspectRatio))
 
 
     def setMode(self) : 
         self.charPreset = self.ui.char_radioButton.isChecked()
         self.propPreset = self.ui.prop_radioButton.isChecked()
+        self.normalPreset = self.ui.normal_checkBox.isChecked()
+        self.extraPreset = self.ui.extra_checkBox.isChecked()
 
     def setProject(self) : 
         projs = self.project.listProjects()
@@ -290,13 +297,21 @@ class MyForm(QtGui.QMainWindow):
         row = 0 
         height = 20 
         widget = 'tableWidget'
-        presetID = self.getPresetID()
+
+        presetID = self.getPresetID('dynamic')
+        presetExtraID = self.getPresetID('fixed')
+
         dbMID = self.getAllDbMatteID()
 
         self.clearTable(widget)
 
         # store previous entry to check if there are duplicated IDs
         tmpList = [vrayMtls[a] for a in vrayMtls]
+
+        # remove from extra ID 
+        tmpList = [a for a in tmpList if not a in presetExtraID]
+
+        # dup list 
         dupList = [k for k,v in Counter(tmpList).items() if v>1]
 
         for vrayMtl in vrayMtls : 
@@ -328,6 +343,12 @@ class MyForm(QtGui.QMainWindow):
             if mID in presetID : 
                 idColor = self.green
                 presetStatus = True
+
+            elif mID in presetExtraID : 
+                idColor = self.lightGreen
+                presetStatus = False
+                status = self.extraPresetStatus
+                statusColor = self.blue
 
             else : 
                 statusColor = self.red
@@ -382,51 +403,32 @@ class MyForm(QtGui.QMainWindow):
 
 
     def setPresets(self) : 
-        if self.charPreset : 
 
-            # read preset 
-            preset = presets.charPresets 
+        # read preset 
+        presets = []
 
-            # get UI info
-            currentID = int(str(self.ui.id_label.text()))
-            display = str(self.ui.display_lineEdit.text())
-            assignVrayMID = [int(a) for a in self.getAllData(self.oID2Col, 'tableWidget')]
+        if self.normalPreset : 
+            preset = self.getPreset()
+            presets.append(preset)
 
-            # clear UI 
-            self.ui.preset_listWidget.clear()
+        if self.extraPreset : 
+            preset2 = self.getPreset('fixed')
+            presets.append(preset2)
 
-            for each in preset : 
-                mID = each + currentID
-                tag = preset[each]['tag']
-                mm = preset[each]['mm'].replace(presets.presetKey, display)
-                icon = self.okIcon
-                status = self.assignStatus
-                statusColor = [40, 120, 40]
+        # get UI info
+        currentID = int(str(self.ui.id_label.text()))
+        display = str(self.ui.display_lineEdit.text())
+        assignVrayMID = [int(a) for a in self.getAllData(self.oID2Col, 'tableWidget')]
 
-                if not mID in assignVrayMID : 
-                    status = self.openStatus
-                    statusColor = [120, 40, 40]
-                    icon = self.redIcon
-                
-                self.addCustomShotListWidget(str(mID), tag, status, mm, statusColor, [0, 0, 0], icon, 16)
+        # clear UI 
+        self.ui.preset_listWidget.clear()
 
-        if self.propPreset : 
-
-            # read preset 
-            preset = presets.propPresets 
-
-            # get UI info
-            currentID = int(str(self.ui.id_label.text()))
-            display = str(self.ui.display_lineEdit.text())
-            assignVrayMID = [int(a) for a in self.getAllData(self.oID2Col, 'tableWidget')]
-
-            # clear UI 
-            self.ui.preset_listWidget.clear()
-
-            for each in preset : 
+        for preset in presets : 
+            for each in sorted(preset.keys()) : 
                 mID = each
                 tag = preset[each]['tag']
                 mm = preset[each]['mm']
+
                 icon = self.okIcon
                 status = self.assignStatus
                 statusColor = [40, 120, 40]
@@ -439,37 +441,64 @@ class MyForm(QtGui.QMainWindow):
                 self.addCustomShotListWidget(str(mID), tag, status, mm, statusColor, [0, 0, 0], icon, 16)
 
 
-
-    def getPresetID(self, raw = False) : 
+    def getPresetID(self, mode = 'dynamic') : 
         objID = int(str(self.ui.id_label.text()))
-        preset = presets.charPresets 
+        preset = self.getPreset(mode)
         ids = [a for a in sorted(preset.keys())]
-
-        if not raw : 
-            ids = [a + objID for a in ids]
 
         return ids 
 
 
     def getPresetInfo(self, key, mID) : 
         objID = int(str(self.ui.id_label.text()))
-        preset = presets.charPresets 
-        mIDKey = mID - objID
+        preset = dict()
+
+        preset1 = self.getPreset('dynamic')
+        preset2 = self.getPreset('fixed')
+        mIDKey = mID
+
+        preset.update(preset1)
+        preset.update(preset2)
 
         if mIDKey in preset.keys() : 
-            tag = preset[mIDKey][key]
+            result = preset[mIDKey][key]
 
-            return tag
+            return result
 
 
-    def getPreset(self) : 
+    def getPreset(self, mode = 'dynamic') : 
+        # tmpDict 
+        tmpDict = dict()
+        # get current ID
+        currentID = int(str(self.ui.id_label.text()))
+        display = str(self.ui.display_lineEdit.text())
+
+        extraPreset = presets.extraPreset
+
         if self.charPreset : 
             preset = presets.charPresets
 
         if self.propPreset : 
-            preset = presets.etcPresets
+            preset = presets.propPresets
 
-        return preset
+        if mode == 'dynamic' : 
+            for each in preset : 
+                mID = each + currentID
+                tag = preset[each]['tag']
+                mm = preset[each]['mm'].replace(presets.presetKey, display)
+                presetName = preset[each]['presetName']
+                tmpDict.update({mID: {'tag': tag, 'mm': mm, 'presetName': presetName, 'type': 'dynamic'}})
+
+        if mode == 'fixed' : 
+            for each in extraPreset : 
+                mID = each
+                tag = extraPreset[each]['tag']
+                mm = extraPreset[each]['mm']
+                presetName = extraPreset[each]['presetName']
+                tmpDict.update({mID: {'tag': tag, 'mm': mm, 'presetName': presetName, 'type': 'fixed'}})
+
+
+        return tmpDict
 
     # button action 
 
@@ -499,8 +528,13 @@ class MyForm(QtGui.QMainWindow):
         dbOId = self.getAllDbOId()
 
         if not oId in dbOId : 
+
+            # filter mIDs 
+            validMIDs = [int(mIDs[i]) for i in range(len(mIDs)) if statuses[i] == self.readyStatus or statuses[i] == self.extraPresetStatus]
+            validMIDs = sorted(list(set(validMIDs)))
+
             # add objectID to database 
-            db.addObjectIDValue(conn, oId, assetName, assetPath, user, str(mIDs))
+            db.addObjectIDValue(conn, oId, assetName, assetPath, user, str(validMIDs))
 
             trace('Add %s %s %s %s %s to database' % (oId, assetName, assetPath, user, str(mIDs)))
 

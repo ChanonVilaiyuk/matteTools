@@ -21,6 +21,8 @@ reload(projectInfo)
 
 from tool.matte import create_db as db
 reload(db)
+from tool.matte import presets
+reload(presets)
 
 moduleFile = sys.modules[__name__].__file__
 moduleDir = os.path.dirname(moduleFile)
@@ -90,6 +92,10 @@ class MyForm(QtGui.QMainWindow):
         self.colorCol = 2
         self.multiMatteCol = 3
         self.vrayMtlCol = 4 
+
+        # color 
+        self.dbColor = [0, 20, 60]
+        self.presetColor = [0, 20, 100]
 
         self.initFunctions()
         self.initSignals()
@@ -182,9 +188,14 @@ class MyForm(QtGui.QMainWindow):
 
 
     def viewMatteIDTable(self) : 
+        # sel item 
+        selMatteID = self.getDataFromSelectedRange(self.mIDsCol, 'objectID_tableWidget')
+        selMatteIDList = [a for a in eval(selMatteID[0])]
+
         # re read DB
         # self.readDb()
-        matteIDs = self.getMatteIDValue()
+        matteIDs = self.getMatteIDValue(selMatteID)
+        presetMatteIDs = presets.extraPreset
 
         row = 0 
         widget = 'matteID_tableWidget'
@@ -208,18 +219,39 @@ class MyForm(QtGui.QMainWindow):
                 vrayMtl = str(eachItem[self.vrayMtlCol])
 
                 self.insertRow(row, height, widget)
-                self.fillInTable(row, self.umidCol, ID, widget, [1, 1, 1])
-                self.fillInTable(row, self.midCol, mID, widget, [1, 1, 1])
-                self.fillInTable(row, self.colorCol, color, widget, [1, 1, 1])
-                self.fillInTable(row, self.multiMatteCol, multiMatte, widget, [1, 1, 1])
-                self.fillInTable(row, self.vrayMtlCol, vrayMtl, widget, [1, 1, 1])
+                self.fillInTable(row, self.umidCol, ID, widget, self.dbColor)
+                self.fillInTable(row, self.midCol, mID, widget, self.dbColor)
+                self.fillInTable(row, self.colorCol, color, widget, self.dbColor)
+                self.fillInTable(row, self.multiMatteCol, multiMatte, widget, self.dbColor)
+                self.fillInTable(row, self.vrayMtlCol, vrayMtl, widget, self.dbColor)
 
                 row += 1 
 
+            for mID in selMatteIDList : 
+                if mID in presetMatteIDs : 
+                    mm = presetMatteIDs[mID]['mm']
+                    color = ''
+                    vrayMtl = ''
+
+                    self.insertRow(row, height, widget)
+                    self.fillInTable(row, self.umidCol, str(mID), widget, self.presetColor)
+                    self.fillInTable(row, self.midCol, str(mID), widget, self.presetColor)
+                    self.fillInTable(row, self.colorCol, color, widget, self.presetColor)
+                    self.fillInTable(row, self.multiMatteCol, mm, widget, self.presetColor)
+                    self.fillInTable(row, self.vrayMtlCol, vrayMtl, widget, self.presetColor)
+
+                    row += 1 
 
 
-    def getMatteIDValue(self) : 
-        matteIDs = self.getDataFromSelectedRange(self.mIDsCol, 'objectID_tableWidget')
+            self.ui.matteID_tableWidget.resizeColumnToContents(self.umidCol )
+            self.ui.matteID_tableWidget.resizeColumnToContents(self.midCol)
+            self.ui.matteID_tableWidget.resizeColumnToContents(self.colorCol)
+            self.ui.matteID_tableWidget.resizeColumnToContents(self.multiMatteCol)
+            self.ui.matteID_tableWidget.resizeColumnToContents(self.vrayMtlCol)
+
+
+
+    def getMatteIDValue(self, matteIDs) : 
 
         if matteIDs : 
             mIDs = eval(matteIDs[0])

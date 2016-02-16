@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>872</width>
+    <width>932</width>
     <height>601</height>
    </rect>
   </property>
@@ -16,7 +16,7 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_3">
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="3,2">
+     <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="4,1,1,1">
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_4">
         <item>
@@ -127,6 +127,29 @@
          </layout>
         </item>
        </layout>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QLabel" name="logo2_label">
+        <property name="text">
+         <string>TextLabel</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        </property>
+       </widget>
       </item>
       <item>
        <widget class="QLabel" name="logo_label">
@@ -281,7 +304,7 @@
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_5">
         <item>
-         <widget class="QFrame" name="frame">
+         <widget class="QFrame" name="dynamic_checkBox">
           <property name="frameShape">
            <enum>QFrame::Box</enum>
           </property>
@@ -292,7 +315,7 @@
            <item>
             <widget class="QRadioButton" name="char_radioButton">
              <property name="text">
-              <string>Character Presets</string>
+              <string>Characters</string>
              </property>
              <property name="checked">
               <bool>true</bool>
@@ -303,6 +326,23 @@
             <widget class="QRadioButton" name="prop_radioButton">
              <property name="text">
               <string>Props</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="normal_checkBox">
+             <property name="text">
+              <string>Normal</string>
+             </property>
+             <property name="checked">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QCheckBox" name="extra_checkBox">
+             <property name="text">
+              <string>Extra</string>
              </property>
             </widget>
            </item>
@@ -343,7 +383,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>872</width>
+     <width>932</width>
      <height>21</height>
     </rect>
    </property>
