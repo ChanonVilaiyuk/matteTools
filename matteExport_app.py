@@ -62,7 +62,7 @@ class MyForm(QtGui.QMainWindow):
         f.close()
 
         self.ui.show()
-        self.ui.setWindowTitle('PT Matte Export')
+        self.ui.setWindowTitle('PT Vray Matte Export v.1.0')
 
         # variable 
         self.asset = entityInfo.info()
@@ -115,12 +115,15 @@ class MyForm(QtGui.QMainWindow):
         self.tagCol = 2
         self.statusCol = 3
         self.MultiMatteCol = 4
+        self.colorCol = 5
 
         # table colors
         self.red = [60, 0, 0]
         self.green = [0, 60, 0]
         self.blue = [20, 40, 100]
         self.lightGreen = [40, 100, 0]
+
+        self.colorMap = {'red': [100, 0, 0], 'green': [0, 100, 0], 'blue': [0, 0, 100], None: [0, 0, 0]}
 
         self.initFunctions()
         self.initSignals()
@@ -138,12 +141,16 @@ class MyForm(QtGui.QMainWindow):
         self.ui.export_pushButton.clicked.connect(self.doExport)
         self.ui.assign_pushButton.clicked.connect(self.doAssign)
         self.ui.dbView_pushButton.clicked.connect(self.runDBView)
+        self.ui.auto_pushButton.clicked.connect(self.autoAssign)
 
         # radioButton 
         self.ui.char_radioButton.clicked.connect(self.refreshUI)
         self.ui.prop_radioButton.clicked.connect(self.refreshUI)
         self.ui.normal_checkBox.stateChanged.connect(self.refreshUI)
         self.ui.extra_checkBox.stateChanged.connect(self.refreshUI)
+
+        # table widget 
+        self.ui.tableWidget.itemSelectionChanged.connect(self.tableAction)
 
 
     def readDb(self) : 
@@ -205,8 +212,9 @@ class MyForm(QtGui.QMainWindow):
         self.ui.assetName_label.setText(assetName)
 
         # display name 
-        displayName = assetName.split('_')[1]
-        self.ui.display_lineEdit.setText(displayName)
+        if assetName : 
+            displayName = assetName.split('_')[1]
+            self.ui.display_lineEdit.setText(displayName)
 
 
     def setObjectID(self) : 
@@ -322,6 +330,7 @@ class MyForm(QtGui.QMainWindow):
             tag = ''
             mmName = self.getPresetInfo('mm', mID)
             tag = self.getPresetInfo('tag', mID)
+            color = self.getPresetInfo('color', mID)
 
             dbStatus = False
             presetStatus = False 
@@ -374,6 +383,7 @@ class MyForm(QtGui.QMainWindow):
             self.fillInTable(row, self.tagCol, tag, widget, [0, 0, 0])
             self.fillInTable(row, self.MultiMatteCol, mmName, widget, [0, 0, 0])
             self.fillInTable(row, self.statusCol, status, widget, statusColor)
+            self.fillInTable(row, self.colorCol, color, widget, self.colorMap[color])
 
             row += 1 
 
@@ -487,7 +497,8 @@ class MyForm(QtGui.QMainWindow):
                 tag = preset[each]['tag']
                 mm = preset[each]['mm'].replace(presets.presetKey, display)
                 presetName = preset[each]['presetName']
-                tmpDict.update({mID: {'tag': tag, 'mm': mm, 'presetName': presetName, 'type': 'dynamic'}})
+                color = preset[each]['color']
+                tmpDict.update({mID: {'tag': tag, 'mm': mm, 'presetName': presetName, 'type': 'dynamic', 'color': color}})
 
         if mode == 'fixed' : 
             for each in extraPreset : 
@@ -495,7 +506,8 @@ class MyForm(QtGui.QMainWindow):
                 tag = extraPreset[each]['tag']
                 mm = extraPreset[each]['mm']
                 presetName = extraPreset[each]['presetName']
-                tmpDict.update({mID: {'tag': tag, 'mm': mm, 'presetName': presetName, 'type': 'fixed'}})
+                color = extraPreset[each]['color']
+                tmpDict.update({mID: {'tag': tag, 'mm': mm, 'presetName': presetName, 'type': 'fixed', 'color': color}})
 
 
         return tmpDict
@@ -505,8 +517,6 @@ class MyForm(QtGui.QMainWindow):
     def doExport(self) : 
         """ export to database """ 
         trace('-------  Start Export --------')
-        # assign objectID to Rig_Grp
-        self.assignObjectID()
 
         # get data 
         dbPath = str(self.ui.db_lineEdit.text())
@@ -523,11 +533,15 @@ class MyForm(QtGui.QMainWindow):
         statuses = self.getAllData(self.statusCol, 'tableWidget')
         multiMattes = self.getAllData(self.MultiMatteCol, 'tableWidget')
         vrayMtls = self.getAllData(self.vrayMtlCol, 'tableWidget')
+        colors = self.getAllData(self.colorCol, 'tableWidget')
 
         # check if objectID exists in DB 
         dbOId = self.getAllDbOId()
 
         if not oId in dbOId : 
+
+            # assign objectID to Rig_Grp
+            self.assignObjectID()
 
             # filter mIDs 
             validMIDs = [int(mIDs[i]) for i in range(len(mIDs)) if statuses[i] == self.readyStatus or statuses[i] == self.extraPresetStatus]
@@ -543,13 +557,14 @@ class MyForm(QtGui.QMainWindow):
                 status = statuses[i] 
                 multiMatte = multiMattes[i]
                 vrayMtl = vrayMtls[i]
+                color = colors[i]
 
                 if status == self.readyStatus : 
-                    db.addMatteIDValue(conn, mID, '-', multiMatte, vrayMtl)
-                    trace('Write %s %s %s %s to Database' % (mID, '-', multiMatte, vrayMtl))
+                    db.addMatteIDValue(conn, mID, color, multiMatte, vrayMtl)
+                    trace('Write %s %s %s %s to Database' % (mID, color, multiMatte, vrayMtl))
 
                 else : 
-                    trace('Not export to Databse! %s %s %s %s to Database' % (mID, '-', multiMatte, vrayMtl))
+                    trace('Not export to Databse! %s %s %s %s to Database' % (mID, color, multiMatte, vrayMtl))
 
 
             conn.commit()
@@ -580,6 +595,32 @@ class MyForm(QtGui.QMainWindow):
 
             self.setVrayMtlUI()
             self.setPresets()
+
+
+    def autoAssign(self) : 
+        """ auto assign material from preset """
+        presets = self.getPreset()
+        matchs = []
+
+        if presets : 
+            for each in presets : 
+                mID = each
+                mtrName = presets[each]['presetName']
+                match = mc.ls('%s_VRay*' % mtrName)
+
+                if match : 
+                    vrayAttr = '%s.vrayMaterialId' % match[0]
+
+                    if mc.objExists(vrayAttr) : 
+                        result = mc.setAttr(vrayAttr, mID)
+                        matchs.append(mtrName)
+
+            self.setVrayMtlUI()
+            self.setPresets()
+
+        if not matchs : 
+            self.messageBox('Information', 'No material match preset')
+
 
 
     def checkMatteIDRecord(self, matteIds) : 
@@ -663,6 +704,28 @@ class MyForm(QtGui.QMainWindow):
         reload(app)
 
         myApp = app.MyForm(app.getMayaWindow())
+
+
+    def tableAction(self) : 
+        """ select object from material """
+        if self.ui.select_checkBox.isChecked() : 
+            mtrs = self.getDataFromSelectedRange(self.vrayMtlCol, 'tableWidget')
+
+            sels = []
+
+            if mtrs : 
+                for each in mtrs : 
+                    if mc.objExists(each) : 
+                        mc.hyperShade(objects = each)
+                        objs = mc.ls(sl = True)
+
+                        for obj in objs : 
+                            if not obj in sels : 
+                                sels.append(obj)
+
+                mc.select(cl = True)
+                mc.select(sels)
+                    
 
     # Table Functions 
 

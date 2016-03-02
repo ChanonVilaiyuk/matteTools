@@ -79,6 +79,10 @@ def getAssetName(sql, assetName) :
     result = sql.execute('SELECT * FROM ObjectID WHERE AssetName = "%s"' % assetName)
     return result 
 
+def getRecordFromPath(sql, path) : 
+    result = sql.execute('SELECT * FROM ObjectID WHERE AssetPath = "%s"' % path)
+    return result 
+
 def getMatteID(sql, mID) : 
     result = sql.execute('SELECT * FROM MatteID WHERE mID = %s' % mID)
     return result 
@@ -100,6 +104,8 @@ def getAllMID(sql) :
 def getAllOID(sql) : 
     result = sql.execute('SELECT oID FROM ObjectID')
     return result
+
+
 
 # conn.execute("INSERT INTO COMPANY (ID,NAME,AGE,ADDRESS,SALARY) \
 #       VALUES (1, 'Paul', 32, 'California', 20000.00 )");
