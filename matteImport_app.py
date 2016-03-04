@@ -317,6 +317,7 @@ class MyForm(QtGui.QMainWindow):
         for eachAsset in info : 
             mms = info[eachAsset]['info']
             status = info[eachAsset]['status']
+            print status
 
             self.setStatusAsset(eachAsset, status)
 
@@ -332,34 +333,28 @@ class MyForm(QtGui.QMainWindow):
         oIDs = self.getAllData(self.oIDCol, 'tableWidget')
         statuses = self.getAllData(self.statusCol, 'tableWidget')
 
-        # assetInfo = self.getAssetInfo()
-
-        # for each in assetInfo : 
-        #     mIDs = assetInfo[each]['matteIDs']
-        #     oID = assetInfo[each]['oID']
-        #     omm = 'mm_%s' % assetInfo[each]['assetName']
+        assetInfo = self.getAssetInfo()
 
         info = dict()
-        if assets : 
-            for i in range(len(assets)) : 
+
+        if assetInfo : 
+            for each in assetInfo : 
                 tmpDict = dict()
-
-                mIDs = eval(selMID[i])
-                items = []
-                oID = oIDs[i]
-                omm = 'mm_%s' % assets[i]
-                assetStatus = statuses[i]
-
+                assetName = assetInfo[each]['assetName']
+                mIDs = assetInfo[each]['matteIDs']
+                oID = assetInfo[each]['oID']
+                omm = 'mm_%s' % assetName
+                db = assetInfo[each]['db']
                 mmExists = mc.objExists(omm)
                 status = True
 
-                if not assetStatus == 'Not in DB' : 
+                if db : 
                     tmpDict.update({omm: {'color': {'red': oID, 'green': 0, 'blue': 0}, 'exists': mmExists, 'materialId': False}})
                     # vr.assignMultiMatte(omm,'red', int(oID), materialId = False)
                     if not mmExists : 
                         status = False
 
-                    for mID in mIDs : 
+                    for mID in eval(mIDs) : 
                         result = self.getDbMatteID(conn, mID)
 
                         if result : 
@@ -405,7 +400,7 @@ class MyForm(QtGui.QMainWindow):
 
                         # print result
 
-                    info.update({assets[i]: {'info': tmpDict, 'status': status}})
+                    info.update({assetName: {'info': tmpDict, 'status': status}})
 
         conn.close()
 

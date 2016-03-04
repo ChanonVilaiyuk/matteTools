@@ -552,6 +552,7 @@ class MyForm(QtGui.QMainWindow):
 
             trace('Add %s %s %s %s %s to database' % (oId, assetName, assetPath, user, str(mIDs)))
 
+            tmpDict = dict()
             for i in range(len(mIDs)) : 
                 mID = mIDs[i]
                 status = statuses[i] 
@@ -559,8 +560,22 @@ class MyForm(QtGui.QMainWindow):
                 vrayMtl = vrayMtls[i]
                 color = colors[i]
 
+                if not mID in tmpDict.keys() : 
+                    tmpDict.update({mID: {'mID': mID, 'status': status, 'mm': multiMatte, 'vrayMtl': [vrayMtl], 'color': color}})
+
+                else : 
+                    tmpDict[mID]['vrayMtl'].append(vrayMtl)
+
+
+            for each in tmpDict.keys() : 
+                mID = each 
+                status = tmpDict[each]['status']
+                color = tmpDict[each]['color']
+                multiMatte = tmpDict[each]['mm']
+                vrayMtl = tmpDict[each]['vrayMtl']
+
                 if status == self.readyStatus : 
-                    db.addMatteIDValue(conn, mID, color, multiMatte, vrayMtl)
+                    db.addMatteIDValue(conn, mID, color, multiMatte, str(vrayMtl))
                     trace('Write %s %s %s %s to Database' % (mID, color, multiMatte, vrayMtl))
 
                 else : 
