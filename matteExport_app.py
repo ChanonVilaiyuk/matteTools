@@ -15,7 +15,7 @@ import maya.cmds as mc
 import maya.mel as mm
 
 # import pipeline modules 
-from tool.utils import mayaTools, pipelineTools
+from tool.utils import mayaTools, pipelineTools, fileUtils
 from tool.utils import entityInfo2 as entityInfo
 from tool.utils import projectInfo
 from tool.utils.vray import vray_utils as vr
@@ -62,7 +62,7 @@ class MyForm(QtGui.QMainWindow):
         f.close()
 
         self.ui.show()
-        self.ui.setWindowTitle('PT Vray Matte Export v.1.0')
+        self.ui.setWindowTitle('PT Vray Matte Export Dev v.1.0')
 
         # variable 
         self.asset = entityInfo.info()
@@ -100,6 +100,11 @@ class MyForm(QtGui.QMainWindow):
 
         # target rigGrp
         self.rigGrp = ['Rig_Grp', 'Rig:Rig_Grp']
+
+        # matte presets 
+        self.charPresetPath = 'P:/Library/lookdev/mattePresets/charPreset'
+        self.propPresetPath = 'P:/Library/lookdev/mattePresets/propPreset'
+        self.presetData = dict()
 
         # table objectID
         self.idCol = 0 
@@ -152,6 +157,9 @@ class MyForm(QtGui.QMainWindow):
         # table widget 
         self.ui.tableWidget.itemSelectionChanged.connect(self.tableAction)
 
+        # comboBox
+        self.ui.preset_comboBox.currentIndexChanged.connect(self.presetComboBoxAction)
+
 
     def readDb(self) : 
         project = str(self.ui.project_comboBox.currentText())
@@ -161,10 +169,13 @@ class MyForm(QtGui.QMainWindow):
         self.dbData = dbResult
 
     def setUI(self) : 
+        self.customUI()
         self.setLogo()
         self.setProject()
         self.setAssetName()
         self.setMode()
+        self.setPresetFiles()
+        self.setPresetData()
         self.setObjectID()
         self.setVrayMtlUI()
         self.setPresets()
@@ -172,9 +183,16 @@ class MyForm(QtGui.QMainWindow):
 
     def refreshUI(self) : 
         self.setMode()
+        self.setPresetFiles()
+        self.setPresetData()
         self.setObjectID()
         self.setVrayMtlUI()
         self.setPresets()
+
+
+
+    def customUI(self) : 
+        self.ui.save_pushButton.setVisible(False)
 
 
     def setLogo(self) : 
@@ -187,6 +205,43 @@ class MyForm(QtGui.QMainWindow):
         self.propPreset = self.ui.prop_radioButton.isChecked()
         self.normalPreset = self.ui.normal_checkBox.isChecked()
         self.extraPreset = self.ui.extra_checkBox.isChecked()
+
+
+    def presetComboBoxAction(self) : 
+        self.setPresetData()
+        self.setObjectID()
+        self.setVrayMtlUI()
+        self.setPresets()
+
+
+    def setPresetData(self) : 
+        if self.charPreset : 
+            path = self.charPresetPath
+            preset = presets.charPresets
+
+        if self.propPreset : 
+            path = self.propPresetPath
+            preset = presets.propPresets
+
+        presetFile = str(self.ui.preset_comboBox.currentText())
+
+        if presetFile : 
+            filePath = '%s/%s' % (path, presetFile)
+
+            if os.path.exists(filePath) : 
+                f = open(filePath, 'r')
+                data = eval(f.read())
+                f.close()
+                print 'preset from %s' % presetFile
+                self.presetData = data
+
+                return data
+
+        else : 
+            print 'preset from presets.py'
+            self.presetData = preset
+            return preset
+
 
     def setProject(self) : 
         projs = self.project.listProjects()
@@ -451,6 +506,21 @@ class MyForm(QtGui.QMainWindow):
                 self.addCustomShotListWidget(str(mID), tag, status, mm, statusColor, [0, 0, 0], icon, 16)
 
 
+
+    def setPresetFiles(self) : 
+        if self.charPreset : 
+            path = self.charPresetPath
+
+        if self.propPreset : 
+            path = self.propPresetPath
+
+        files = fileUtils.listFile(path, 'txt')
+
+        if files : 
+            self.ui.preset_comboBox.clear()
+            self.ui.preset_comboBox.addItems(files)
+
+
     def getPresetID(self, mode = 'dynamic') : 
         objID = int(str(self.ui.id_label.text()))
         preset = self.getPreset(mode)
@@ -486,10 +556,12 @@ class MyForm(QtGui.QMainWindow):
         extraPreset = presets.extraPreset
 
         if self.charPreset : 
-            preset = presets.charPresets
+            # preset = presets.charPresets
+            preset = self.presetData
 
         if self.propPreset : 
-            preset = presets.propPresets
+            # preset = presets.propPresets
+            preset = self.presetData
 
         if mode == 'dynamic' : 
             for each in preset : 
@@ -511,6 +583,7 @@ class MyForm(QtGui.QMainWindow):
 
 
         return tmpDict
+
 
     # button action 
 
