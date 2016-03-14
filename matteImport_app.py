@@ -21,6 +21,7 @@ from tool.utils import projectInfo
 from tool.utils.vray import vray_utils as vr
 reload(projectInfo)
 reload(vr)
+reload(pipelineTools)
 
 from tool.matte import create_db as db
 reload(db)
@@ -255,27 +256,28 @@ class MyForm(QtGui.QMainWindow):
         assetInfo = dict()
 
         for eachRef in refs : 
-            asset = entityInfo.info(eachRef)
-            assetName = asset.name()
-            assetPath = asset.getPath('ref')
-            record = self.getObjectIDRecord(assetName)
-            
-            if record : 
-                oID = record[1]
-                dbAssetName = record[2]
-                dbAssetPath = record[3]
-                dbUser = record[4]
-                dbMatteRange = record[5]
+            if pipelineTools.checkPipelinePath(eachRef, mode = 'asset') : 
+                asset = entityInfo.info(eachRef)
+                assetName = asset.name()
+                assetPath = asset.getPath('ref')
+                record = self.getObjectIDRecord(assetName)
+                
+                if assetName and record : 
+                    oID = record[1]
+                    dbAssetName = record[2]
+                    dbAssetPath = record[3]
+                    dbUser = record[4]
+                    dbMatteRange = record[5]
 
-                if not assetName in assetInfo.keys() : 
-                    assetInfo.update({assetName: {'db': True, 'oID': oID, 'assetName': dbAssetName, 'assetPath': dbAssetPath, 'user': dbUser, 'matteIDs': dbMatteRange, 'No': 1}})
+                    if not assetName in assetInfo.keys() : 
+                        assetInfo.update({assetName: {'db': True, 'oID': oID, 'assetName': dbAssetName, 'assetPath': dbAssetPath, 'user': dbUser, 'matteIDs': dbMatteRange, 'No': 1}})
+
+                    else : 
+                        assetInfo[assetName]['No'] += 1
 
                 else : 
-                    assetInfo[assetName]['No'] += 1
-
-            else : 
-                if not assetName in assetInfo.keys() : 
-                    assetInfo.update({assetName: {'db': False, 'oID': None, 'assetName': assetName, 'assetPath': assetPath, 'user': None, 'matteIDs': None, 'No': 1}})
+                    if not assetName in assetInfo.keys() : 
+                        assetInfo.update({assetName: {'db': False, 'oID': None, 'assetName': assetName, 'assetPath': assetPath, 'user': None, 'matteIDs': None, 'No': 1}})
 
 
 
@@ -341,9 +343,10 @@ class MyForm(QtGui.QMainWindow):
             for each in assetInfo : 
                 tmpDict = dict()
                 assetName = assetInfo[each]['assetName']
+                ommName = assetName.split('_')[-1]
                 mIDs = assetInfo[each]['matteIDs']
                 oID = assetInfo[each]['oID']
-                omm = 'mm_%s' % assetName
+                omm = 'mm_%s' % ommName
                 db = assetInfo[each]['db']
                 mmExists = mc.objExists(omm)
                 status = True

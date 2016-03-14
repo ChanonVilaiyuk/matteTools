@@ -1,3 +1,10 @@
+''' 
+v.1.0 stable function 
+v.1.1 add preset files
+
+
+'''
+
 #Import python modules
 import os, sys
 import sqlite3
@@ -62,7 +69,7 @@ class MyForm(QtGui.QMainWindow):
         f.close()
 
         self.ui.show()
-        self.ui.setWindowTitle('PT Vray Matte Export Dev v.1.0')
+        self.ui.setWindowTitle('PT Vray Matte Export v.1.1')
 
         # variable 
         self.asset = entityInfo.info()
@@ -232,7 +239,7 @@ class MyForm(QtGui.QMainWindow):
                 f = open(filePath, 'r')
                 data = eval(f.read())
                 f.close()
-                print 'preset from %s' % presetFile
+                print 'preset from %s' % filePath
                 self.presetData = data
 
                 return data
