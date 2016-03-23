@@ -443,6 +443,9 @@ class MyForm(QtGui.QMainWindow):
                 dupStatus = True 
                 statusColor = self.red
 
+                if midKey : 
+                    status = self.inDb
+
             else : 
                 dupStatus = True
 
@@ -857,7 +860,7 @@ class MyForm(QtGui.QMainWindow):
             mc.setAttr(attr, l = False)
         except Exception as e : 
             print e 
-            
+
         mc.setAttr(attr, value)
         # mc.setAttr(attr, l = True)
 
