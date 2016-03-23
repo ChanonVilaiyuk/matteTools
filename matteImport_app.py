@@ -100,7 +100,8 @@ class MyForm(QtGui.QMainWindow):
         self.extraPresetStatus = 'Extra Preset'
 
         # target rigGrp
-        self.rigGrp = ['Rig_Grp', 'Rig:Rig_Grp']
+        self.rigGrp = 'Rig_Grp'
+        self.geoGrp = 'Geo_Grp'
 
         # table objectID
         self.statusCol = 0 
@@ -308,9 +309,56 @@ class MyForm(QtGui.QMainWindow):
                         for color in colors : 
                             mID = colors[color]
                             vr.assignMultiMatte(mmName, color, int(mID), materialId)
-
+                            
+        # assign object ID 
+        self.assignObjectIDCmd()
 
         self.checkStatus()
+
+
+    def assignObjectIDCmd(self) : 
+        assets = self.getDataFromSelectedRange(self.assetCol, 'tableWidget')
+        oIDs = self.getDataFromSelectedRange(self.oIDCol, 'tableWidget')
+
+        assetGrps = mc.ls('*:%s' % self.geoGrp)
+
+        assetInfo = dict()
+        for geoGrp in assetGrps : 
+            attr = '%s.assetName' % geoGrp
+
+            if mc.objExists(attr) : 
+                assetName = mc.getAttr(attr)
+
+                upperGrp = mc.listRelatives(geoGrp, p = True)
+
+                if upperGrp : 
+                    if not assetName in assetInfo.keys() : 
+                        assetInfo.update({assetName: [upperGrp[0]]})
+
+                    else : 
+                        assetInfo[assetName].append(upperGrp[0])
+
+        if assets and oIDs : 
+            for i in range(len(assets)) : 
+                asset = assets[i]
+                oID = oIDs[i]
+
+                if asset in assetInfo.keys() : 
+                    assignGrps = assetInfo[asset]
+                    
+                    for eachGrp in assignGrps : 
+                        self.assignObjectID(eachGrp, oID)
+
+
+    def assignObjectID(self, target, objectID) : 
+        """ set objectID to Rig_Grp """
+
+        vr.addVrayObjectID(target, 1)
+        mc.setAttr('%s.vrayObjectID' % target, int(objectID))
+        trace('assign %s to %s' % (objectID, target))
+
+        return True
+
 
     def checkStatus(self) : 
 
@@ -352,7 +400,7 @@ class MyForm(QtGui.QMainWindow):
                 status = True
 
                 if db : 
-                    tmpDict.update({omm: {'color': {'red': oID, 'green': 0, 'blue': 0}, 'exists': mmExists, 'materialId': False}})
+                    tmpDict.update({omm: {'color': {'red': oID}, 'exists': mmExists, 'materialId': False}})
                     # vr.assignMultiMatte(omm,'red', int(oID), materialId = False)
                     if not mmExists : 
                         status = False

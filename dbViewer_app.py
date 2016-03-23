@@ -139,9 +139,10 @@ class MyForm(QtGui.QMainWindow):
 
         # current project
         currProject = self.asset.project()
+        checkProject = [a.lower() for a in projects]
 
-        if currProject in projects : 
-            row = projects.index(currProject)
+        if currProject.lower() in checkProject : 
+            row = checkProject.index(currProject.lower())
             self.ui.project_comboBox.setCurrentIndex(row)
             self.readDb()
 

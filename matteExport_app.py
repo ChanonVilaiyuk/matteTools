@@ -261,11 +261,13 @@ class MyForm(QtGui.QMainWindow):
 
         self.ui.project_comboBox.addItems(projects)
 
+
         # current project
         currProject = self.asset.project()
+        projectCheck = [a.lower() for a in projects]
 
-        if currProject in projects : 
-            row = projects.index(currProject)
+        if currProject.lower() in projectCheck : 
+            row = projectCheck.index(currProject.lower())
             self.ui.project_comboBox.setCurrentIndex(row)
             self.readDb()
 
@@ -686,7 +688,8 @@ class MyForm(QtGui.QMainWindow):
             # assign matteID 
             vrayAttr = '%s.vrayMaterialId' % vrayMtrs[0]
             mID = int(item[0])
-            result = mc.setAttr(vrayAttr, mID)
+            # result = mc.setAttr(vrayAttr, mID)
+            result = self.setID(vrayAttr, mID)
 
             self.setVrayMtlUI()
             self.setPresets()
@@ -707,7 +710,8 @@ class MyForm(QtGui.QMainWindow):
                     vrayAttr = '%s.vrayMaterialId' % match[0]
 
                     if mc.objExists(vrayAttr) : 
-                        result = mc.setAttr(vrayAttr, mID)
+                        # result = mc.setAttr(vrayAttr, mID)
+                        self.setID(vrayAttr, mID)
                         matchs.append(mtrName)
 
             self.setVrayMtlUI()
@@ -789,9 +793,16 @@ class MyForm(QtGui.QMainWindow):
         for target in self.rigGrp : 
             if mc.objExists(target) : 
                 vr.addVrayObjectID(target, 1)
-                mc.setAttr('%s.vrayObjectID' % target, currentID)
+                # mc.setAttr('%s.vrayObjectID' % target, currentID)
+                self.setID('%s.vrayObjectID' % target, currentID)
 
                 trace('assign %s to %s' % (currentID, target))
+
+
+    def setID(self, attr, value) : 
+        # mc.setAttr(attr, l = False)
+        mc.setAttr(attr, value)
+        # mc.setAttr(attr, l = True)
 
 
     def runDBView(self) : 

@@ -67,6 +67,9 @@ def addObjectIDValue(sql, oID, AssetName, AssetPath, User, mID) :
 def addMatteIDValue(sql, mID, Color, MultiMatte, VrayMtl) : 
     sql.execute('''INSERT INTO MatteID (mID, Color, MultiMatte, VrayMtl) VALUES(?,?,?,?)''', (mID, Color, MultiMatte, VrayMtl))
 
+def updateObjectIDValue(sql, ID, oID, AssetName, AssetPath, User, mID) : 
+    sql.execute('''INSERT INTO ObjectID (oID, AssetName, AssetPath, User, mID) VALUES(?,?,?,?,?)''', (oID, AssetName, AssetPath, User, mID))
+
 def queryObjectIDTable(sql) : 
     result = sql.execute('SELECT * FROM ObjectID')
     return result
