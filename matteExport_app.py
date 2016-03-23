@@ -620,60 +620,71 @@ class MyForm(QtGui.QMainWindow):
         # check if objectID exists in DB 
         dbOId = self.getAllDbOId()
 
-        if not oId in dbOId : 
+        idKey = self.checkoID(oId)
 
-            # assign objectID to Rig_Grp
-            self.assignObjectID()
+        # assign objectID to Rig_Grp
+        self.assignObjectID()
 
-            # filter mIDs 
-            validMIDs = [int(mIDs[i]) for i in range(len(mIDs)) if statuses[i] == self.readyStatus or statuses[i] == self.extraPresetStatus]
-            validMIDs = sorted(list(set(validMIDs)))
+        # filter mIDs 
+        validMIDs = [int(mIDs[i]) for i in range(len(mIDs)) if statuses[i] == self.readyStatus or statuses[i] == self.extraPresetStatus]
+        validMIDs = sorted(list(set(validMIDs)))
 
+        if not idKey : 
             # add objectID to database 
             db.addObjectIDValue(conn, oId, assetName, assetPath, user, str(validMIDs))
 
-            trace('Add %s %s %s %s %s to database' % (oId, assetName, assetPath, user, str(mIDs)))
-
-            tmpDict = dict()
-            for i in range(len(mIDs)) : 
-                mID = mIDs[i]
-                status = statuses[i] 
-                multiMatte = multiMattes[i]
-                vrayMtl = vrayMtls[i]
-                color = colors[i]
-
-                if not mID in tmpDict.keys() : 
-                    tmpDict.update({mID: {'mID': mID, 'status': status, 'mm': multiMatte, 'vrayMtl': [vrayMtl], 'color': color}})
-
-                else : 
-                    tmpDict[mID]['vrayMtl'].append(vrayMtl)
-
-
-            for each in tmpDict.keys() : 
-                mID = each 
-                status = tmpDict[each]['status']
-                color = tmpDict[each]['color']
-                multiMatte = tmpDict[each]['mm']
-                vrayMtl = tmpDict[each]['vrayMtl']
-
-                if status == self.readyStatus : 
-                    db.addMatteIDValue(conn, mID, color, multiMatte, str(vrayMtl))
-                    trace('Write %s %s %s %s to Database' % (mID, color, multiMatte, vrayMtl))
-
-                else : 
-                    trace('Not export to Databse! %s %s %s %s to Database' % (mID, color, multiMatte, vrayMtl))
-
-
-            conn.commit()
-
-            self.readDb()
-            self.setObjectID()
-            self.setVrayMtlUI()
-            trace('Export complete')
-            self.messageBox('Success', 'Export ID %s to Database complete' % oId)
+        elif self.ui.update_checkBox.isChecked() : 
+            db.updateObjectIDValue(conn, idKey[0], oId, assetName, assetPath, user, str(validMIDs))
 
         else : 
             self.messageBox('Warning', 'ID %s exists in Database' % oId)
+            return 
+
+        trace('Add %s %s %s %s %s to database' % (oId, assetName, assetPath, user, str(mIDs)))
+
+        tmpDict = dict()
+        for i in range(len(mIDs)) : 
+            mID = mIDs[i]
+            status = statuses[i] 
+            multiMatte = multiMattes[i]
+            vrayMtl = vrayMtls[i]
+            color = colors[i]
+
+            if not mID in tmpDict.keys() : 
+                tmpDict.update({mID: {'mID': mID, 'status': status, 'mm': multiMatte, 'vrayMtl': [vrayMtl], 'color': color}})
+
+            else : 
+                tmpDict[mID]['vrayMtl'].append(vrayMtl)
+
+
+        for each in tmpDict.keys() : 
+            mID = each 
+            status = tmpDict[each]['status']
+            color = tmpDict[each]['color']
+            multiMatte = tmpDict[each]['mm']
+            vrayMtl = tmpDict[each]['vrayMtl']
+
+            if status == self.readyStatus : 
+                db.addMatteIDValue(conn, mID, color, multiMatte, str(vrayMtl))
+                trace('Write %s %s %s %s to Database' % (mID, color, multiMatte, vrayMtl))
+
+            else : 
+                trace('Not export to Databse! %s %s %s %s to Database' % (mID, color, multiMatte, vrayMtl))
+
+
+        conn.commit()
+
+        self.readDb()
+        self.setObjectID()
+        self.setVrayMtlUI()
+        trace('Export complete')
+        self.messageBox('Success', 'Export ID %s to Database complete' % oId)
+
+        # else : 
+        #     # if self.ui.update_checkBox.isChecked() : 
+        #     #     print idKey
+
+        #     self.messageBox('Warning', 'ID %s exists in Database' % oId)
 
         conn.close()
 
@@ -762,6 +773,31 @@ class MyForm(QtGui.QMainWindow):
     def getAllDbOId(self) : 
         conn = sqlite3.connect(str(self.ui.db_lineEdit.text()))
         result = db.getAllOID(conn)
+        ids = []
+        
+        for each in result : 
+            ids.append(each[0])
+
+        conn.close()
+
+        return ids
+
+
+    def checkoID(self, oID) : 
+        conn = sqlite3.connect(str(self.ui.db_lineEdit.text()))
+        result = db.getObjectID(conn, oID)
+        ids = []
+        
+        for each in result : 
+            ids.append(each[0])
+
+        conn.close()
+
+        return ids
+
+    def checkmID(self, mID) : 
+        conn = sqlite3.connect(str(self.ui.db_lineEdit.text()))
+        result = db.getMatteID(conn, oID)
         ids = []
         
         for each in result : 

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>932</width>
+    <width>948</width>
     <height>601</height>
    </rect>
   </property>
@@ -16,7 +16,7 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_3">
     <item>
-     <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="4,1,1,1">
+     <layout class="QHBoxLayout" name="horizontalLayout_4" stretch="4,0,1,1">
       <item>
        <layout class="QVBoxLayout" name="verticalLayout_4">
         <item>
@@ -55,7 +55,21 @@
          </widget>
         </item>
         <item>
-         <layout class="QGridLayout" name="gridLayout_13" columnstretch="0,1,1,1,0,1,0,1">
+         <layout class="QGridLayout" name="gridLayout_13" columnstretch="0,1,1,1,0,0,0,0,0">
+          <item row="0" column="4">
+           <widget class="Line" name="line_2">
+            <property name="orientation">
+             <enum>Qt::Vertical</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="8">
+           <widget class="QPushButton" name="dbView_pushButton">
+            <property name="text">
+             <string>DB view</string>
+            </property>
+           </widget>
+          </item>
           <item row="0" column="0">
            <widget class="QLabel" name="label_29">
             <property name="font">
@@ -68,14 +82,7 @@
             </property>
            </widget>
           </item>
-          <item row="0" column="5">
-           <widget class="QLabel" name="label_30">
-            <property name="text">
-             <string>Display Name : </string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="6">
+          <item row="0" column="7">
            <widget class="QLineEdit" name="display_lineEdit">
             <property name="text">
              <string/>
@@ -103,24 +110,17 @@
             </property>
            </widget>
           </item>
-          <item row="0" column="4">
-           <widget class="Line" name="line_2">
-            <property name="orientation">
-             <enum>Qt::Vertical</enum>
-            </property>
-           </widget>
-          </item>
           <item row="0" column="3">
-           <widget class="QLabel" name="status2_label">
+           <widget class="QCheckBox" name="update_checkBox">
             <property name="text">
-             <string>-</string>
+             <string>Update ID</string>
             </property>
            </widget>
           </item>
-          <item row="0" column="7">
-           <widget class="QPushButton" name="dbView_pushButton">
+          <item row="0" column="6">
+           <widget class="QLabel" name="label_30">
             <property name="text">
-             <string>DB view</string>
+             <string>Display Name : </string>
             </property>
            </widget>
           </item>
@@ -421,7 +421,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>932</width>
+     <width>948</width>
      <height>21</height>
     </rect>
    </property>
