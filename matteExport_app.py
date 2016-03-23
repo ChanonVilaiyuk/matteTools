@@ -373,7 +373,9 @@ class MyForm(QtGui.QMainWindow):
         presetID = self.getPresetID('dynamic')
         presetExtraID = self.getPresetID('fixed')
 
-        dbMID = self.getAllDbMatteID()
+        # disable this because will loop each matteID instead 
+        # dbMID = self.getAllDbMatteID()
+        self.matteIDKey = dict()
 
         self.clearTable(widget)
 
@@ -404,9 +406,17 @@ class MyForm(QtGui.QMainWindow):
                 mmName = mmName.replace(presets.presetKey, str(self.ui.display_lineEdit.text()))  
 
             # if in database 
-            if mID in dbMID : 
+            # if mID in dbMID : 
+            #     status = self.inDb
+            #     statusColor = self.blue
+
+            # use this line instead. to find key ID of matteID
+            midKey = self.checkmID(mID)
+
+            if midKey : 
                 status = self.inDb
                 statusColor = self.blue
+                self.matteIDKey.update({mID: midKey[0]})
 
             else : 
                 statusColor = self.green
@@ -634,6 +644,8 @@ class MyForm(QtGui.QMainWindow):
             db.addObjectIDValue(conn, oId, assetName, assetPath, user, str(validMIDs))
 
         elif self.ui.update_checkBox.isChecked() : 
+            validMIDs = [int(mIDs[i]) for i in range(len(mIDs)) if statuses[i] == self.readyStatus or statuses[i] == self.extraPresetStatus or statuses[i] == self.inDb]
+            validMIDs = sorted(list(set(validMIDs)))
             db.updateObjectIDValue(conn, idKey[0], oId, assetName, assetPath, user, str(validMIDs))
 
         else : 
@@ -667,6 +679,11 @@ class MyForm(QtGui.QMainWindow):
             if status == self.readyStatus : 
                 db.addMatteIDValue(conn, mID, color, multiMatte, str(vrayMtl))
                 trace('Write %s %s %s %s to Database' % (mID, color, multiMatte, vrayMtl))
+
+            elif status == self.inDb : 
+                midKey = self.matteIDKey[int(mID)]
+                db.updateMatteIDValue(conn, midKey, mID, color, multiMatte, str(vrayMtl))
+                trace('Update %s %s %s %s to Database' % (mID, color, multiMatte, vrayMtl))
 
             else : 
                 trace('Not export to Databse! %s %s %s %s to Database' % (mID, color, multiMatte, vrayMtl))
@@ -797,7 +814,7 @@ class MyForm(QtGui.QMainWindow):
 
     def checkmID(self, mID) : 
         conn = sqlite3.connect(str(self.ui.db_lineEdit.text()))
-        result = db.getMatteID(conn, oID)
+        result = db.getMatteID(conn, mID)
         ids = []
         
         for each in result : 
@@ -836,7 +853,11 @@ class MyForm(QtGui.QMainWindow):
 
 
     def setID(self, attr, value) : 
-        # mc.setAttr(attr, l = False)
+        try : 
+            mc.setAttr(attr, l = False)
+        except Exception as e : 
+            print e 
+            
         mc.setAttr(attr, value)
         # mc.setAttr(attr, l = True)
 
