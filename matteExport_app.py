@@ -1,6 +1,7 @@
 ''' 
 v.1.0 stable function 
 v.1.1 add preset files
+v.1.2 add update matte ID
 
 
 '''
@@ -23,7 +24,7 @@ import maya.mel as mm
 
 # import pipeline modules 
 from tool.utils import mayaTools, pipelineTools, fileUtils
-from tool.utils import entityInfo2 as entityInfo
+from tool.utils import entityInfo
 from tool.utils import projectInfo
 from tool.utils.vray import vray_utils as vr
 reload(projectInfo)
@@ -69,14 +70,14 @@ class MyForm(QtGui.QMainWindow):
         f.close()
 
         self.ui.show()
-        self.ui.setWindowTitle('PT Vray Matte Export v.1.1')
+        self.ui.setWindowTitle('PT Vray Matte Export v.1.2')
 
         # variable 
         self.asset = entityInfo.info()
         self.project = projectInfo.info()
 
         # project filters 
-        self.projectPrefix = ['Lego_', 'TVC_']
+        self.projectPrefix = ['Lego_', 'TVC_', 'Maya']
 
         # char ID 
         self.objectIDStep = 20
@@ -154,6 +155,7 @@ class MyForm(QtGui.QMainWindow):
         self.ui.assign_pushButton.clicked.connect(self.doAssign)
         self.ui.dbView_pushButton.clicked.connect(self.runDBView)
         self.ui.auto_pushButton.clicked.connect(self.autoAssign)
+        self.ui.reassign_pushButton.clicked.connect(self.reAssignID)
 
         # radioButton 
         self.ui.char_radioButton.clicked.connect(self.refreshUI)
@@ -291,6 +293,7 @@ class MyForm(QtGui.QMainWindow):
             assetOID = assetInfo[0][self.oIDCol]
             self.setStatus('booked')
             self.ui.id_label.setText(str(assetOID))
+            self.ui.reassign_pushButton.setVisible(True)
 
         else : 
             # read existing 
@@ -298,6 +301,8 @@ class MyForm(QtGui.QMainWindow):
             avId = self.getAvailableID()
             self.ui.id_label.setText(str(avId))
             self.setStatus('ready')
+            self.ui.reassign_pushButton.setVisible(False)
+
 
     def getAvailableID(self) : 
         """ find availble ID """
@@ -472,7 +477,7 @@ class MyForm(QtGui.QMainWindow):
     def listVrayMtlNode(self) : 
         """ list vray material """
 
-        nodes = mc.ls(type = 'VRayMtl') + mc.ls(type = 'VRayBlendMtl')
+        nodes = mc.ls(type = 'VRayMtl') + mc.ls(type = 'VRayBlendMtl') + mc.ls(type = 'VRayBumpMtl') + mc.ls(type = 'VRayMtl2Sided') + mc.ls(type = 'VRayCarPaintMtl')
         vrayNode = dict()
 
         for eachNode in nodes : 
@@ -752,6 +757,32 @@ class MyForm(QtGui.QMainWindow):
             self.messageBox('Information', 'No material match preset')
 
 
+    def reAssignID(self) : 
+        objID = int(str(self.ui.id_label.text()))
+        record = self.getOID(objID)
+        print record
+
+        vrayMtls = [a for a in self.listVrayMtlNode()]
+        
+        if len(record) == 1 : 
+            mIDs = eval(record[0][5])
+            print 'mIDs', mIDs
+            
+            for mID in mIDs : 
+                mtls = eval(self.getMID(mID)[0][4])
+
+                for vrayMtl in vrayMtls : 
+                    if vrayMtl in mtls : 
+                        vrayAttr = '%s.vrayMaterialId' % vrayMtl
+                        self.setID(vrayAttr, mID)
+                        print vrayAttr, mID
+
+                    else : 
+                        print '%s skipped' % vrayMtl
+
+
+        self.refreshUI()
+
 
     def checkMatteIDRecord(self, matteIds) : 
         conn = sqlite3.connect(str(self.ui.db_lineEdit.text()))
@@ -827,6 +858,30 @@ class MyForm(QtGui.QMainWindow):
 
         return ids
 
+    def getOID(self, oID) : 
+        conn = sqlite3.connect(str(self.ui.db_lineEdit.text()))
+        result = db.getObjectID(conn, oID)
+        record = []
+        
+        for each in result : 
+            record.append(each)
+
+        conn.close()
+
+        return record
+
+
+    def getMID(self, mID) : 
+        conn = sqlite3.connect(str(self.ui.db_lineEdit.text()))
+        result = db.getMatteID(conn, mID)
+        record = []
+        
+        for each in result : 
+            record.append(each)
+
+        conn.close()
+
+        return record
 
     def getAllDbMId(self) : 
         conn = sqlite3.connect(str(self.ui.db_lineEdit.text()))
@@ -856,6 +911,9 @@ class MyForm(QtGui.QMainWindow):
 
 
     def setID(self, attr, value) : 
+        if not mc.objExists(attr) : 
+            mm.eval('vray addAttributesFromGroup %s vray_material_id 1' % attr.split('.')[0])
+
         try : 
             mc.setAttr(attr, l = False)
         except Exception as e : 

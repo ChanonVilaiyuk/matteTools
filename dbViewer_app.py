@@ -15,7 +15,7 @@ import maya.mel as mm
 
 # import pipeline modules 
 from tool.utils import mayaTools, pipelineTools
-from tool.utils import entityInfo2 as entityInfo
+from tool.utils import entityInfo
 from tool.utils import projectInfo
 reload(projectInfo)
 

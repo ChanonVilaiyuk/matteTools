@@ -56,4 +56,8 @@ extraPreset = {
 				123: {'tag': 'leaves1', 'mm': 'mm_tree', 'presetName': '', 'color': 'red'}, 
 				124: {'tag': 'leaves2', 'mm': 'mm_tree', 'presetName': '', 'color': 'green'}, 
 				125: {'tag': 'leaves3', 'mm': 'mm_tree', 'presetName': '', 'color': 'blue'}, 
+
+				200: {'tag': 'transparent4', 'mm': 'mm_transparent2', 'presetName': '', 'color': 'red'}, 
+				201: {'tag': 'transparent5', 'mm': 'mm_transparent2', 'presetName': '', 'color': 'green'}, 
+				202: {'tag': 'transparent6', 'mm': 'mm_transparent2', 'presetName': '', 'color': 'blue'},
 				}
