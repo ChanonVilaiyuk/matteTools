@@ -290,9 +290,55 @@ class MyForm(QtGui.QMainWindow):
     # button action 
 
     def doCreate(self) : 
-        assets = self.getDataFromSelectedRange(self.assetCol, 'tableWidget')
-        selMID = self.getDataFromSelectedRange(self.mIDsCol, 'tableWidget')
-        oIDs = self.getDataFromSelectedRange(self.oIDCol, 'tableWidget')
+        if self.ui.viewport_checkBox.isChecked(): 
+            self.viewportSelection()
+
+        self.createMatte()
+
+    def viewportSelection(self): 
+        items = self.ui.tableWidget.selectedItems()
+        assets = self.getAssetSelection()
+        self.clearTableSelection(self.ui.tableWidget)
+
+        if assets: 
+            for i in range(self.ui.tableWidget.rowCount()): 
+                item = self.ui.tableWidget.item(i, self.assetCol)
+                label = str(item.text())
+
+                if label in assets: 
+                    item.setSelected(True)
+
+    def getAssetSelection(self): 
+        objs = mc.ls(sl=True)
+        assets = []
+        namespaces = []
+        if objs: 
+            for obj in objs: 
+                if mc.referenceQuery(obj, inr=True): 
+                    path = mc.referenceQuery(obj, f=True)
+                    asset = entityInfo.info(path)
+                    if not asset.name() in assets: 
+                        assets.append(asset.name())
+
+                else: 
+                    namespace = obj.split(':')[0]
+                    if not namespace in namespaces: 
+                        namespaces.append(namespace)
+
+            for namespace in namespaces: 
+                attr = '%s:Geo_Grp.assetName' % namespace 
+                if mc.objExists(attr): 
+                    assetName = mc.getAttr(attr)
+                    if not assetName in assets: 
+                        assets.append(assetName)
+
+
+        return assets
+
+    def createMatte(self): 
+        assets = self.getSelectedColumnData(self.assetCol, self.ui.tableWidget)
+        selMID = self.getSelectedColumnData(self.mIDsCol, self.ui.tableWidget)
+        oIDs = self.getSelectedColumnData(self.oIDCol, self.ui.tableWidget)
 
         info = self.checkMultiMatte()
         print 'info', info
@@ -321,8 +367,8 @@ class MyForm(QtGui.QMainWindow):
 
 
     def assignObjectIDCmd(self) : 
-        assets = self.getDataFromSelectedRange(self.assetCol, 'tableWidget')
-        oIDs = self.getDataFromSelectedRange(self.oIDCol, 'tableWidget')
+        assets = self.getSelectedColumnData(self.assetCol, self.ui.tableWidget)
+        oIDs = self.getSelectedColumnData(self.oIDCol, self.ui.tableWidget)
 
         assetGrps = mc.ls('*:%s' % self.geoGrp)
 
@@ -603,6 +649,23 @@ class MyForm(QtGui.QMainWindow):
 
         return items
 
+    def clearTableSelection(self, widget): 
+        items = widget.selectedItems()
+        if items: 
+            for item in items: 
+                item.setSelected(False)
+
+
+    def getSelectedColumnData(self, columnNumber, widget): 
+        items = widget.selectedItems()
+        itemStr = []
+        if items: 
+            for item in items: 
+                row = item.row()
+                itemColumn = widget.item(row, columnNumber)
+                itemStr.append(str(itemColumn.text()))
+
+        return itemStr
 
     def getDataFromSelectedRange(self, columnNumber, widget) : 
         lists = eval('self.ui.%s.selectedRanges()' % widget)
