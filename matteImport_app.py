@@ -63,7 +63,7 @@ class MyForm(QtGui.QMainWindow):
         f.close()
 
         self.ui.show()
-        self.ui.setWindowTitle('PT Vray Matte Import v.1.0')
+        self.ui.setWindowTitle('PT Vray Matte Import v.1.1')
 
         # variable 
         self.asset = entityInfo.info()
@@ -333,7 +333,7 @@ class MyForm(QtGui.QMainWindow):
                         assets.append(assetName)
 
 
-        return assets
+            return assets
 
     def createMatte(self): 
         assets = self.getSelectedColumnData(self.assetCol, self.ui.tableWidget)

@@ -33,6 +33,12 @@ propPresets = {
 				7: {'tag': 'Etc7', 'mm': 'mm_$replace_etc3', 'presetName': '', 'color': 'red'}, 
 				8: {'tag': 'Etc8', 'mm': 'mm_$replace_etc3', 'presetName': '', 'color': 'green'}, 
 				9: {'tag': 'Etc9', 'mm': 'mm_$replace_etc3', 'presetName': '', 'color': 'blue'}, 
+				10: {'tag': 'CarLight1', 'mm': 'mm_$replace_carLight1', 'presetName': '', 'color': 'red'}, 
+				11: {'tag': 'CarLight2', 'mm': 'mm_$replace_carLight1', 'presetName': '', 'color': 'green'}, 
+				12: {'tag': 'CarLight3', 'mm': 'mm_$replace_carLight1', 'presetName': '', 'color': 'blue'}, 
+				13: {'tag': 'CarLight4', 'mm': 'mm_$replace_carLight2', 'presetName': '', 'color': 'red'}, 
+				14: {'tag': 'CarLight5', 'mm': 'mm_$replace_carLight2', 'presetName': '', 'color': 'green'}, 
+				15: {'tag': 'CarLight6', 'mm': 'mm_$replace_carLight2', 'presetName': '', 'color': 'blue'}, 
 				}
 
 
