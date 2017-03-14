@@ -63,7 +63,7 @@ class MyForm(QtGui.QMainWindow):
         f.close()
 
         self.ui.show()
-        self.ui.setWindowTitle('PT Vray Matte Import v.1.0')
+        self.ui.setWindowTitle('PT Vray Matte Import v.1.1')
 
         # variable 
         self.asset = entityInfo.info()
@@ -140,7 +140,8 @@ class MyForm(QtGui.QMainWindow):
     def readDb(self) : 
         project = str(self.ui.project_comboBox.currentText())
         dbResult = db.readDatabase(project)
-        self.ui.db_lineEdit.setText(db.dbPath(project))
+        # self.ui.db_lineEdit.setText(db.dbPath(project))
+        self.ui.db_lineEdit.setText(db.dbPathRes(project))
 
         self.dbData = dbResult
 
@@ -262,7 +263,8 @@ class MyForm(QtGui.QMainWindow):
         for eachRef in refs : 
             if pipelineTools.checkPipelinePath(eachRef, mode = 'asset') : 
                 asset = entityInfo.info(eachRef)
-                assetName = asset.name()
+                # assetName = asset.name()
+                assetName = '%s_%s' % (asset.name(), asset.taskLOD())
                 assetPath = asset.getPath('ref')
                 record = self.getObjectIDRecord(assetName)
                 
@@ -317,8 +319,9 @@ class MyForm(QtGui.QMainWindow):
                 if mc.referenceQuery(obj, inr=True): 
                     path = mc.referenceQuery(obj, f=True)
                     asset = entityInfo.info(path)
-                    if not asset.name() in assets: 
-                        assets.append(asset.name())
+                    assetName = '%s_%s' % (asset.name(), asset.taskLOD())
+                    if not assetName in assets: 
+                        assets.append(assetName)
 
                 else: 
                     namespace = obj.split(':')[0]
@@ -327,13 +330,15 @@ class MyForm(QtGui.QMainWindow):
 
             for namespace in namespaces: 
                 attr = '%s:Geo_Grp.assetName' % namespace 
+                lod = '%s:Geo_Grp.lod' % namespace 
                 if mc.objExists(attr): 
-                    assetName = mc.getAttr(attr)
+                    # assetName = mc.getAttr(attr)
+                    assetName = '%s_%s' % (mc.getAttr(attr), lod)
                     if not assetName in assets: 
                         assets.append(assetName)
 
 
-        return assets
+            return assets
 
     def createMatte(self): 
         assets = self.getSelectedColumnData(self.assetCol, self.ui.tableWidget)
@@ -441,7 +446,7 @@ class MyForm(QtGui.QMainWindow):
             for each in assetInfo : 
                 tmpDict = dict()
                 assetName = assetInfo[each]['assetName']
-                ommName = assetName.split('_')[-1]
+                ommName = assetName.split('_')[-2]
                 mIDs = assetInfo[each]['matteIDs']
                 oID = assetInfo[each]['oID']
                 omm = 'mm_%s' % ommName

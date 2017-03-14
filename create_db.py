@@ -10,8 +10,16 @@ def dbPath(project) :
     path = 'P:/%s/.local/vrayMatteID.db' % project
     return path 
 
-def readDatabase(project) : 
+def dbPathCustom(project, dbName) : 
+    path = 'P:/%s/.local/%s.db' % (project, dbName)
+    return path 
+
+def readDatabase(project, dbName='') : 
     path = dbPath(project)
+    
+    if dbName: 
+        path = dbPathCustom(project, dbName)
+        
     dbDir = os.path.dirname(path)
 
     if not os.path.exists(dbDir) : 

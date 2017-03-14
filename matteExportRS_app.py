@@ -1,8 +1,5 @@
 ''' 
-v.1.0 stable function 
-v.1.1 add preset files
-v.1.2 add update matte ID
-
+v.1.0 Redshift modify
 
 '''
 
@@ -46,7 +43,6 @@ sys.path.append(moduleDir)
 def getMayaWindow():
     ptr = mui.MQtUtil.mainWindow()
     if ptr is not  None:
-        # ptr = mui.MQtUtil.mainWindow()
         return wrapInstance(long(ptr), QtGui.QMainWindow)
 
 class MyForm(QtGui.QMainWindow):
@@ -63,7 +59,7 @@ class MyForm(QtGui.QMainWindow):
         loader = QtUiTools.QUiLoader()
         loader.setWorkingDirectory(moduleDir)
 
-        f = QtCore.QFile("%s/matteExport_ui_dev.ui" % moduleDir)
+        f = QtCore.QFile("%s/matteExport_ui.ui" % moduleDir)
         f.open(QtCore.QFile.ReadOnly)
 
         self.myWidget = loader.load(f, self)
@@ -72,7 +68,7 @@ class MyForm(QtGui.QMainWindow):
         f.close()
 
         self.ui.show()
-        self.ui.setWindowTitle('PT Vray Matte Export v.1.2')
+        self.ui.setWindowTitle('PT Redshift Matte Export v.1.0')
 
         # variable 
         self.asset = entityInfo.info()
@@ -107,8 +103,6 @@ class MyForm(QtGui.QMainWindow):
         self.inDb = 'In DataBase'
         self.wrongIDStatus = 'Wrong ID Setting'
         self.extraPresetStatus = 'Extra Preset'
-
-        self.defaultRes = ['lo', 'md', 'hi']
 
         # target rigGrp
         self.rigGrp = ['Rig_Grp', 'Rig:Rig_Grp']
@@ -172,10 +166,10 @@ class MyForm(QtGui.QMainWindow):
 
         # comboBox
         self.ui.preset_comboBox.currentIndexChanged.connect(self.presetComboBoxAction)
-        self.ui.res_comboBox.currentIndexChanged.connect(self.changeResDb)
 
 
     def readDb(self) : 
+        """ create default db file. If not exists, generate one """ 
         project = str(self.ui.project_comboBox.currentText())
         # below code has been moved to redshift_hook.py
         # dbResult = db.readDatabase(project, dbName='rsMatteID')
@@ -189,7 +183,6 @@ class MyForm(QtGui.QMainWindow):
         self.setLogo()
         self.setProject()
         self.setAssetName()
-        self.setRes()
         self.setMode()
         self.setPresetFiles()
         self.setPresetData()
@@ -217,11 +210,6 @@ class MyForm(QtGui.QMainWindow):
         self.ui.logo2_label.setPixmap(QtGui.QPixmap(self.logo2).scaled(126, 60, QtCore.Qt.KeepAspectRatio))
 
 
-    def setRes(self): 
-        self.ui.res_comboBox.addItems(self.defaultRes)
-        if self.asset.taskLOD() in self.defaultRes: 
-            self.ui.res_comboBox.setCurrentIndex(self.defaultRes.index(self.asset.taskLOD()))
-
     def setMode(self) : 
         self.charPreset = self.ui.char_radioButton.isChecked()
         self.propPreset = self.ui.prop_radioButton.isChecked()
@@ -234,10 +222,6 @@ class MyForm(QtGui.QMainWindow):
         self.setObjectID()
         self.setMtlUI()
         self.setPresets()
-
-    def changeResDb(self): 
-
-        self.refreshUI()
 
 
     def setPresetData(self) : 
@@ -285,14 +269,14 @@ class MyForm(QtGui.QMainWindow):
         currProject = self.asset.project()
         projectCheck = [a.lower() for a in projects]
 
-        if currProject.lower() in projectCheck : 
-            row = projectCheck.index(currProject.lower())
-            self.ui.project_comboBox.setCurrentIndex(row)
-            self.readDb()
+        if currProject: 
+            if currProject.lower() in projectCheck : 
+                row = projectCheck.index(currProject.lower())
+                self.ui.project_comboBox.setCurrentIndex(row)
+                self.readDb()
 
     def setAssetName(self) : 
-        # assetName = self.asset.name()
-        assetName = '%s_%s' % (self.asset.name(), self.asset.taskLOD())
+        assetName = self.asset.name()
         self.ui.assetName_label.setText(assetName)
 
         # display name 
@@ -388,7 +372,7 @@ class MyForm(QtGui.QMainWindow):
 
 
     def setMtlUI(self) : 
-        vrayMtls = self.listMtlNode()
+        mtls = self.listMtlNode()
         row = 0 
         height = 20 
         widget = 'tableWidget'
@@ -403,7 +387,7 @@ class MyForm(QtGui.QMainWindow):
         self.clearTable(widget)
 
         # store previous entry to check if there are duplicated IDs
-        tmpList = [vrayMtls[a] for a in vrayMtls]
+        tmpList = [mtls[a] for a in mtls]
 
         # remove from extra ID 
         tmpList = [a for a in tmpList if not a in presetExtraID]
@@ -411,8 +395,8 @@ class MyForm(QtGui.QMainWindow):
         # dup list 
         dupList = [k for k,v in Counter(tmpList).items() if v>1]
 
-        for vrayMtl in vrayMtls : 
-            mID = vrayMtls[vrayMtl]
+        for mtl in mtls : 
+            mID = mtls[mtl]
             idColor = self.red
             statusColor = self.red
             status = self.wrongIDStatus
@@ -478,7 +462,7 @@ class MyForm(QtGui.QMainWindow):
                 
 
             self.insertRow(row, height, widget)
-            self.fillInTable(row, self.vrayMtlCol, vrayMtl, widget, [1, 1, 1])
+            self.fillInTable(row, self.vrayMtlCol, mtl, widget, [1, 1, 1])
             self.fillInTable(row, self.oID2Col, str(mID), widget, idColor)
             self.fillInTable(row, self.tagCol, tag, widget, [0, 0, 0])
             self.fillInTable(row, self.MultiMatteCol, mmName, widget, [0, 0, 0])
@@ -492,25 +476,26 @@ class MyForm(QtGui.QMainWindow):
         self.ui.tableWidget.resizeColumnToContents(self.tagCol)
 
 
+    """ this has been moved to redshift_hook.py """ 
     def listMtlNode(self) : 
-        """ list vray material """
         return hook.listMtlNode()
+    #     """ list material """
 
-        # nodes = mc.ls(type = 'VRayMtl') + mc.ls(type = 'VRayBlendMtl') + mc.ls(type = 'VRayBumpMtl') + mc.ls(type = 'VRayMtl2Sided') + mc.ls(type = 'VRayCarPaintMtl')
-        # vrayNode = dict()
+    #     nodes = mc.ls(type = 'VRayMtl') + mc.ls(type = 'VRayBlendMtl') + mc.ls(type = 'VRayBumpMtl') + mc.ls(type = 'VRayMtl2Sided') + mc.ls(type = 'VRayCarPaintMtl')
+    #     vrayNode = dict()
 
-        # for eachNode in nodes : 
-        #     attr = '%s.vrayMaterialId' % eachNode
+    #     for eachNode in nodes : 
+    #         attr = '%s.vrayMaterialId' % eachNode
 
-        #     if mc.listConnections(eachNode, t = 'shadingEngine') : 
-        #         if not mc.objExists(attr) : 
-        #             mm.eval('vray addAttributesFromGroup %s vray_material_id 1' % eachNode)
+    #         if mc.listConnections(eachNode, t = 'shadingEngine') : 
+    #             if not mc.objExists(attr) : 
+    #                 mm.eval('vray addAttributesFromGroup %s vray_material_id 1' % eachNode)
 
-        #         id = mc.getAttr('%s.vrayMaterialId' % eachNode)
+    #             id = mc.getAttr('%s.vrayMaterialId' % eachNode)
 
-        #         vrayNode[eachNode] = id
+    #             vrayNode[eachNode] = id
 
-        # return vrayNode
+    #     return vrayNode
 
 
     def setPresets(self) : 
@@ -741,9 +726,7 @@ class MyForm(QtGui.QMainWindow):
         if item and mtrs : 
 
             # assign matteID 
-            # vrayAttr = '%s.vrayMaterialId' % mtrs[0]
             mID = int(item[0])
-            # result = mc.setAttr(vrayAttr, mID)
             result = self.setID(mtrs[0], mID)
 
             self.setMtlUI()
@@ -762,10 +745,11 @@ class MyForm(QtGui.QMainWindow):
                 match = mc.ls('%s_%s*' % (mtrName, hook.presetName))
 
                 if match : 
+                    # matteIDAttr = '%s.vrayMaterialId' % match[0]
                     matteIDAttr = hook.matteIDAttr(match[0])
 
                     if mc.objExists(matteIDAttr) : 
-                        # result = mc.setAttr(vrayAttr, mID)
+                        # result = mc.setAttr(matteIDAttr, mID)
                         self.setID(match[0], mID)
                         matchs.append(mtrName)
 
@@ -792,12 +776,12 @@ class MyForm(QtGui.QMainWindow):
 
                 for mtl in mtls : 
                     if mtl in mtls : 
-                        vrayAttr = hook.matteIDAttr(mtl)
+                        # vrayAttr = '%s.vrayMaterialId' % mtl
                         self.setID(mtl, mID)
-                        print vrayAttr, mID
+                        # print vrayAttr, mID
 
                     else : 
-                        print '%s skipped' % vrayMtl
+                        print '%s skipped' % mtl
 
 
         self.refreshUI()
@@ -917,31 +901,32 @@ class MyForm(QtGui.QMainWindow):
 
     def assignObjectID(self) : 
         """ set objectID to Rig_Grp """
-        currentID = int(str(self.ui.id_label.text()))
+        # not use for Redshift
+        return 
+        # currentID = int(str(self.ui.id_label.text()))
 
-        # rig grp
-        for target in self.rigGrp : 
-            if mc.objExists(target) : 
-                vr.addVrayObjectID(target, 1)
-                # mc.setAttr('%s.vrayObjectID' % target, currentID)
-                # self.setID('%s.vrayObjectID' % target, currentID)
-                hook.setObjectID(target, currentID)
+        # # rig grp
+        # for target in self.rigGrp : 
+        #     if mc.objExists(target) : 
+        #         vr.addVrayObjectID(target, 1)
+        #         # mc.setAttr('%s.vrayObjectID' % target, currentID)
+        #         # self.setID('%s.vrayObjectID' % target, currentID)
 
-                trace('assign %s to %s' % (currentID, target))
+        #         trace('assign %s to %s' % (currentID, target))
 
 
     def setID(self, material, value) : 
-        attr = hook.matteIDAttr(material)
+        hook.setID(material, value)
+        # if not mc.objExists(attr) : 
+        #     mm.eval('vray addAttributesFromGroup %s vray_material_id 1' % attr.split('.')[0])
 
-        if not mc.objExists(attr) : 
-            mm.eval('vray addAttributesFromGroup %s vray_material_id 1' % attr.split('.')[0])
+        # try : 
+        #     mc.setAttr(attr, l = False)
+        # except Exception as e : 
+        #     print e 
 
-        try : 
-            mc.setAttr(material, l = False)
-        except Exception as e : 
-            print e 
-
-        mc.setAttr(attr, value)
+        # mc.setAttr(attr, value)
+        # mc.setAttr(attr, l = True)
 
 
     def runDBView(self) : 
